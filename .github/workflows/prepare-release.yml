@@ -119,11 +119,20 @@ jobs:
               if (!prMatch) continue;
 
               const prNumber = parseInt(prMatch[1], 10);
-              const pr = (await github.rest.pulls.get({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: prNumber,
-              })).data;
+              let pr;
+              try {
+                pr = (await github.rest.pulls.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: prNumber,
+                })).data;
+              } catch (error) {
+                if (error.status === 404) {
+                  console.log(`PR #${prNumber} not found, skipping.`);
+                  continue;
+                }
+                throw error;
+              }
 
               const labelPrefix = "changelog:";
               const labels = pr.labels
