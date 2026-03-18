@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
@@ -38,7 +38,7 @@ jobs:
         run: echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Check if branch exists
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           NEW_VERSION: ${{ steps.set_version.outputs.new_version }}
         with:
@@ -61,7 +61,7 @@ jobs:
 
       - name: Get latest release tag
         id: get_release
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             try {
@@ -83,7 +83,7 @@ jobs:
 
       - name: Build changelog from PRs
         id: changelog
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           HAS_RELEASE: ${{ steps.get_release.outputs.has_release }}
           LATEST_TAG: ${{ steps.get_release.outputs.latest_tag }}
@@ -177,7 +177,7 @@ jobs:
           done
 
       - name: Update changelog.txt
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           CHANGELOG_TEXT: ${{ steps.changelog.outputs.changelog }}
         with:
@@ -196,7 +196,7 @@ jobs:
           sed -i -E "s/^(Stable tag:)[[:space:]]*[0-9.]+/\1 $CURRENT_STABLE/" "readme.txt"
 
       - name: Update readme.txt changelog
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           CHANGELOG_TEXT: ${{ steps.changelog.outputs.changelog }}
         with:
@@ -243,7 +243,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout release branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ format('refs/heads/release/{0}', github.event.inputs.version) }}
 
@@ -259,7 +259,7 @@ jobs:
           vendor/bin/phing
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: facebook-pixel-for-wordpress
           path: build/facebook-pixel-for-wordpress-*.zip
