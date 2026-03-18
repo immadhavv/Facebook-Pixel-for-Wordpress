@@ -64,20 +64,36 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const latestRelease = await github.rest.repos.getLatestRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-            });
-            core.setOutput("latest_tag", latestRelease.data.tag_name);
-            console.log("Latest release tag:", latestRelease.data.tag_name);
+            try {
+              const latestRelease = await github.rest.repos.getLatestRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+              });
+              core.setOutput("latest_tag", latestRelease.data.tag_name);
+              core.setOutput("has_release", "true");
+              console.log("Latest release tag:", latestRelease.data.tag_name);
+            } catch (error) {
+              if (error.status === 404) {
+                console.log("No previous release found. Will include all commits.");
+                core.setOutput("has_release", "false");
+              } else {
+                throw error;
+              }
+            }
 
       - name: Get commits since latest release
         id: get_commits
         run: |
-          git fetch origin tag ${{ steps.get_release.outputs.latest_tag }}
-          echo "commits<<EOF" >> $GITHUB_OUTPUT
-          git rev-list ${{ steps.get_release.outputs.latest_tag }}..HEAD >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          if [ "${{ steps.get_release.outputs.has_release }}" = "true" ]; then
+            git fetch origin tag ${{ steps.get_release.outputs.latest_tag }}
+            echo "commits<<EOF" >> $GITHUB_OUTPUT
+            git rev-list ${{ steps.get_release.outputs.latest_tag }}..HEAD >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "commits<<EOF" >> $GITHUB_OUTPUT
+            git rev-list HEAD >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
 
       - name: Build changelog from PRs
         id: changelog
