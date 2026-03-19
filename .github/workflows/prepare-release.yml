@@ -191,7 +191,11 @@ jobs:
 
       - name: Set stable tag to current stable version
         run: |
-          CURRENT_STABLE=$(curl -s 'https://api.wordpress.org/plugins/info/1.2/?action=plugin_information&request%5Bslug%5D=official-facebook-pixel' | jq -r '.version')
+          CURRENT_STABLE=$(curl -sf 'https://api.wordpress.org/plugins/info/1.2/?action=plugin_information&request%5Bslug%5D=official-facebook-pixel' | jq -r '.version')
+          if [ -z "$CURRENT_STABLE" ] || [ "$CURRENT_STABLE" = "null" ]; then
+            echo "::error::Failed to fetch current stable version from WordPress.org API"
+            exit 1
+          fi
           echo "Current stable version: ${CURRENT_STABLE}"
           sed -i -E "s/^(Stable tag:)[[:space:]]*[0-9.]+/\1 $CURRENT_STABLE/" "readme.txt"
 
